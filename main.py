@@ -18,8 +18,8 @@ from dotenv import load_dotenv
 
 # project: admin, user
 import admin, user
-from admin import admin_route
-from user import user_route
+from admin import admin_route, send_help
+from user import user_route, send_help
 
 
 logging.basicConfig(level=logging.INFO)
@@ -58,6 +58,7 @@ def is_admin(user_id: int) -> bool:
     return user_id in ADMIN_IDS
 
 
+# перевіряємо яке повідомлення кидати користувачу на команду 'start'
 @dp.message(CommandStart())
 async def start_bot(message: Message):
     user_id = message.from_user.id
@@ -68,9 +69,14 @@ async def start_bot(message: Message):
         await user.send_start(message)
 
 
+# перевіряємо яке повідомлення кидати користувачу на команду 'help'
 @dp.message(Command('help'))
 async def send_help(message: Message):
-    await message.answer(f'Sorry {message.from_user.first_name}, i don\'t help\nI\'am testing bot')
+    user_id = message.from_user.id
+    if is_admin(user_id):
+        await admin.send_help(message)
+    else:
+        await user.send_help(message)
 
 
 
