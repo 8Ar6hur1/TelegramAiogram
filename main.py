@@ -3,7 +3,7 @@ import logging
 
 # aiogram
 from aiogram import Bot, Dispatcher, F
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, CallbackQuery
 from aiogram.filters import CommandStart, Command
 from aiogram import Router
 
@@ -17,9 +17,9 @@ import os
 from dotenv import load_dotenv
 
 # project: admin, user
-import admin, user
-from admin import admin_route, send_help
-from user import user_route, send_help
+from users import admin, user
+from users.admin import admin_route, send_help as admin_send_help
+from users.user import user_route, send_help as user_send_help
 
 
 logging.basicConfig(level=logging.INFO)
@@ -58,10 +58,19 @@ def is_admin(user_id: int) -> bool:
     return user_id in ADMIN_IDS
 
 
-# перевіряємо яке повідомлення кидати користувачу на команду 'start'
 @dp.message(CommandStart())
 async def start_bot(message: Message):
 
+    r_markup = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text='Site'), KeyboardButton(text='Welcome')],
+        ],
+        resize_keyboard=True
+    )
+
+    await message.answer('Choose an option:', reply_markup=r_markup)
+
+# перевіряємо яке повідомлення кидати користувачу на команду 'start'
     user_id = message.from_user.id
     if is_admin(user_id):
         await admin.send_start(message)
@@ -69,13 +78,22 @@ async def start_bot(message: Message):
         await user.send_start(message)
 
     # Створення инлайн-клавіатури
-    markup = InlineKeyboardMarkup(
+    i_markup = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text='Site', url='https://aiogram.dev')],
-            [InlineKeyboardButton(text='Hello', callback_data='hello')]
+            [InlineKeyboardButton(text='Hello', callback_data='hello')],
+            [InlineKeyboardButton(text='Welcome', callback_data='welcome')]
         ]
     )
-    await message.answer("Please choose an option:", reply_markup=markup)
+    await message.answer("Please choose an option:", reply_markup=i_markup)
+
+
+@dp.callback_query(lambda c: c.data)
+async def process_callback(callback_query: CallbackQuery):
+    if callback_query.data == 'welcome':
+        await bot.answer_callback_query(callback_query.id, 'Option "welcom" selected!')
+    elif callback_query.data == 'hello':
+        await bot.answer_callback_query(callback_query.id, 'Option "hello" selected!')
 
 
 # перевіряємо яке повідомлення кидати користувачу на команду 'help'
@@ -83,16 +101,14 @@ async def start_bot(message: Message):
 async def send_help(message: Message):
     user_id = message.from_user.id
     if is_admin(user_id):
-        await admin.send_help(message)
+        await admin_send_help(message)
     else:
-        await user.send_help(message)
-
-
+        await user_send_help(message)
 
 
 async def main():
     print('Starting bot...')
-    await dp.start_polling(bot, skip_update=True)
+    await dp.start_polling(bot, skip_updates=True)
 
 
 if __name__ == "__main__":
