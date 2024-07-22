@@ -2,8 +2,8 @@
 import logging
 
 # aiogram
-from aiogram import Bot, Dispatcher
-from aiogram.types import Message
+from aiogram import Bot, Dispatcher, F
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import CommandStart, Command
 from aiogram import Router
 
@@ -61,12 +61,21 @@ def is_admin(user_id: int) -> bool:
 # перевіряємо яке повідомлення кидати користувачу на команду 'start'
 @dp.message(CommandStart())
 async def start_bot(message: Message):
+
     user_id = message.from_user.id
-    print(f'Your telegram_id: {user_id}')
     if is_admin(user_id):
         await admin.send_start(message)
     else:
         await user.send_start(message)
+
+    # Створення инлайн-клавіатури
+    markup = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text='Site', url='https://aiogram.dev')],
+            [InlineKeyboardButton(text='Hello', callback_data='hello')]
+        ]
+    )
+    await message.answer("Please choose an option:", reply_markup=markup)
 
 
 # перевіряємо яке повідомлення кидати користувачу на команду 'help'
@@ -83,7 +92,7 @@ async def send_help(message: Message):
 
 async def main():
     print('Starting bot...')
-    await dp.start_polling(bot)
+    await dp.start_polling(bot, skip_update=True)
 
 
 if __name__ == "__main__":
