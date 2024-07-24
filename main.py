@@ -5,7 +5,6 @@ import logging
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, CallbackQuery
 from aiogram.filters import CommandStart, Command
-from aiogram import Router
 
 # asyncio
 import asyncio
